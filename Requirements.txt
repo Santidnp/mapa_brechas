@@ -1,0 +1,6 @@
+streamlit
+streamlit_extras
+folium
+streamlit_dynamic_filters
+streamlit_folium
+plotly
