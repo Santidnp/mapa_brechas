@@ -53,7 +53,7 @@ def generar_base():
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
-    proyecto = read_excel('Proyectos_conteo.xlsx').dropna(subset=['Latitud', 'Longitud'])
+    proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     
     
     return df,inversiones,proyecto
@@ -185,6 +185,7 @@ with mapa:
                 location=[proyecto.iloc[i]['Latitud'], proyecto.iloc[i]['Longitud']],
                 popup=proyecto.iloc[i]['conteo_estados'],
                 #icon=folium.Icon(color=mapeo_colores[inversiones.iloc[i]['Estado']])
+                icon=folium.Icon(color=proyecto.iloc[i]['color'])
                 ).add_to(mapa_colombia)
             
         legend_html = '''
