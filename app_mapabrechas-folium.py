@@ -126,13 +126,13 @@ mapa, barras = st.columns([0.6,0.4])
 st.divider()
 #mapa.metric("Toneladas necesarias",'',2)
 with mapa:
-    ipm_indice = st.selectbox('Componentes Ipm',Ipm_variables)
-    if len(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']]) !=1:
-        mapa.metric("Promedio Departamental",round(df_1[ipm_indice].mean(),2))
-        style_metric_cards()
-    else:
-        mapa.metric("Ínidice Municipal",round(df_1[ipm_indice].mean(),2))
-        style_metric_cards()
+    #ipm_indice = st.selectbox('Componentes Ipm',Ipm_variables)
+    #if len(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']]) !=1:
+        #mapa.metric("Promedio Departamental",round(df_1[ipm_indice].mean(),2))
+        #style_metric_cards()
+    #else:
+        #mapa.metric("Ínidice Municipal",round(df_1[ipm_indice].mean(),2))
+        #style_metric_cards()
     
     
     #st.subheader(Indices)
@@ -191,10 +191,7 @@ with mapa:
         folium_static(mapa_colombia, width=600, height=400)
 
 
-    fig = px.bar(df_2.head(10), y='MPIO_CNMBR', x=Indices)
-    fig.update_yaxes(title_text="")
-    fig.update_layout(width=600, height=400)
-    st.plotly_chart(fig)
+    
 
             
         
@@ -202,15 +199,21 @@ with mapa:
 #folium.LayerControl().add_to_map()
 #map_colombia.save('mapa_folium.html')
 with barras:
-    ipm_indice_2 = st.selectbox('Componentes Ipm',Ipm_variables,key="unique_key_here")
-    if len(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']]) !=1:
-        st.metric("Promedio Departamental",round(df_1[ipm_indice_2].mean(),2))
-    else:
-        st.metric("Ínidice Municipal",round(df_1[ipm_indice_2].mean(),2))
+    #ipm_indice_2 = st.selectbox('Componentes Ipm',Ipm_variables,key="unique_key_here")
+    #if len(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']]) !=1:
+        #st.metric("Promedio Departamental",round(df_1[ipm_indice_2].mean(),2))
+    #else:
+        #st.metric("Ínidice Municipal",round(df_1[ipm_indice_2].mean(),2))
+
+    fig = px.bar(df_2.head(10), y='MPIO_CNMBR', x=Indices)
+    fig.update_yaxes(title_text="")
+    fig.update_layout(width=600, height=400)
+    st.plotly_chart(fig)
 
     
-    st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10),
-                   column_config={"Enlace":st.column_config.LinkColumn()})
+    
 
     #st.write(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10).to_html(escape=False), unsafe_allow_html=True)
-    
+
+st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10),
+                   column_config={"Enlace":st.column_config.LinkColumn()})
