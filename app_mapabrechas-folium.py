@@ -12,6 +12,7 @@ from streamlit_dynamic_filters import DynamicFilters
 from numpy import round
 from streamlit_extras.metric_cards import style_metric_cards
 from pandas import read_excel
+from folium import IFrame
 #def make_clickable(val):
     #return f'<a href="{val}" target="_blank">{val}</a>'
 mapeo_colores = {
@@ -24,7 +25,7 @@ mapeo_colores = {
     'No Aprobado': 'pink',       # Rosa
     'No Viable': 'yellow'          # Lima
 }
-st.set_page_config(layout="wide",initial_sidebar_state="collapsed",page_icon="https://www.dnp.gov.co/img/favicon/faviconNew.ico")
+st.set_page_config(layout="wide",initial_sidebar_state="expanded",page_icon="https://www.dnp.gov.co/img/favicon/faviconNew.ico")
 st.markdown("""
 <nav style="background-color: #f8f9fa; padding: 50px;"display: flex; justify-content: center; align-items: center;">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeQaLUYVjPPowO5IXM7mZh6LT5yitFBoyZRKaBkxQAQw&s" alt="Left Image" style="float: left; height: 50px;">
@@ -59,11 +60,13 @@ def generar_base():
     return df,inversiones,proyecto
 
 df ,inversiones,proyecto = generar_base()
+default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
+
 
 with st.sidebar:
     st.image("dnp-logo.jpg", use_column_width=True)
-    Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns))
+    Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
     #Municipio = st.selectbox('Municipio:',['Todos'] + list(df['Localidad'].unique()))
     #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
@@ -125,7 +128,7 @@ mapa, barras = st.columns([0.6,0.4])
 
 
 
-st.divider()
+#st.divider()
 #mapa.metric("Toneladas necesarias",'',2)
 with mapa:
     #ipm_indice = st.selectbox('Componentes Ipm',Ipm_variables)
@@ -181,32 +184,24 @@ with mapa:
     if boton:
         #inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
         for i in range(0,len(proyecto)):
+            conteo_estados_html = proyecto.iloc[i]['conteo_estados'].replace(',', '<br>')
+            html = f"""
+                    <div style="font-size: 12px; width: 5px;">
+                     {conteo_estados_html}
+                    </div>
+                    """
+    # Crear un IFrame con el contenido HTML
+            iframe = IFrame(html, width=200, height=100)
+            popup = folium.Popup(iframe, max_width=200)
             folium.Marker(
                 location=[proyecto.iloc[i]['Latitud'], proyecto.iloc[i]['Longitud']],
-                popup=proyecto.iloc[i]['conteo_estados'],
+                popup= popup , #proyecto.iloc[i]['conteo_estados'],
                 #icon=folium.Icon(color=mapeo_colores[inversiones.iloc[i]['Estado']])
                 icon=folium.Icon(color=proyecto.iloc[i]['color'])
                 ).add_to(mapa_colombia)
-            
-        legend_html = '''
-                        <div style="position: fixed; 
-                                    bottom: 50px; left: 50px; width: 180px; height: 200px; 
-                                    border:2px solid grey; z-index:9999; font-size:14px;
-                                    background-color: white; opacity: 0.85; padding: 10px;">
-                        <b>Map Legend</b> <br>
-                        <i style="background: blue; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Formulación <br>
-                        <i style="background: orange; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Viable <br>
-                        <i style="background: green; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> En Ejecución <br>
-                        <i style="background: red; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Aprobado <br>
-                        <i style="background: purple; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Terminado <br>
-                        <i style="background: brown; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Desaprobado <br>
-                        <i style="background: pink; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> No Aprobado <br>
-                        <i style="background: yellow; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> No Viable <br>
-                        </div>
-                        '''
 
 # Añadir la leyenda al mapa
-        mapa_colombia.get_root().html.add_child(folium.Element(legend_html))
+        
         folium_static(mapa_colombia, width=600, height=400)
         #st.table(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10))
 
