@@ -12,14 +12,14 @@ from streamlit_dynamic_filters import DynamicFilters
 from numpy import round
 from streamlit_extras.metric_cards import style_metric_cards
 from pandas import read_excel
-def make_clickable(val):
-    return f'<a href="{val}" target="_blank">{val}</a>'
+#def make_clickable(val):
+    #return f'<a href="{val}" target="_blank">{val}</a>'
 mapeo_colores = {
-    'Formulación': 'blue',       # Azul
-    'Viable': 'orange',            # Naranja
-    'En Ejecución': 'green',      # Verde
+    'Formulación': 'blue',       # Azul 
+    'Viable': 'orange',            # Naranja 
+    'En Ejecución': 'green',      # Verde amarrillo
     'Aprobado': 'red',          # Rojo
-    'Terminado': 'purple',         # Morado
+    'Terminado': 'purple',         # Morado verde
     'Desaprobado': 'brown',       # Marrón
     'No Aprobado': 'pink',       # Rosa
     'No Viable': 'yellow'          # Lima
@@ -53,11 +53,12 @@ def generar_base():
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
+    proyecto = read_excel('Proyectos_conteo.xlsx').dropna(subset=['Latitud', 'Longitud'])
     
     
-    return df,inversiones
+    return df,inversiones,proyecto
 
-df ,inversiones= generar_base()
+df ,inversiones,proyecto = generar_base()
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
 
 with st.sidebar:
@@ -97,6 +98,7 @@ with st.sidebar:
 
 df_1 = dynamic_filters.filter_df()
 inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
+proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 #mapa.metric("",'',df_1['Municipio'])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']].loc[:,'Analfabetismo_x'])
@@ -178,12 +180,32 @@ with mapa:
     #folium_static(mapa_colombia, width=600, height=400)
     if boton:
         #inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
-        for i in range(0,len(inversiones)):
+        for i in range(0,len(proyecto)):
             folium.Marker(
-                location=[inversiones.iloc[i]['Latitud'], inversiones.iloc[i]['Longitud']],
-                popup=inversiones.iloc[i]['Nombre Proyecto'],
-                icon=folium.Icon(color=mapeo_colores[inversiones.iloc[i]['Estado']])
+                location=[proyecto.iloc[i]['Latitud'], proyecto.iloc[i]['Longitud']],
+                popup=proyecto.iloc[i]['conteo_estados'],
+                #icon=folium.Icon(color=mapeo_colores[inversiones.iloc[i]['Estado']])
                 ).add_to(mapa_colombia)
+            
+        legend_html = '''
+                        <div style="position: fixed; 
+                                    bottom: 50px; left: 50px; width: 180px; height: 200px; 
+                                    border:2px solid grey; z-index:9999; font-size:14px;
+                                    background-color: white; opacity: 0.85; padding: 10px;">
+                        <b>Map Legend</b> <br>
+                        <i style="background: blue; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Formulación <br>
+                        <i style="background: orange; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Viable <br>
+                        <i style="background: green; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> En Ejecución <br>
+                        <i style="background: red; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Aprobado <br>
+                        <i style="background: purple; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Terminado <br>
+                        <i style="background: brown; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> Desaprobado <br>
+                        <i style="background: pink; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> No Aprobado <br>
+                        <i style="background: yellow; width: 10px; height: 10px; float: left; margin-right: 8px; margin-top: 2px;"></i> No Viable <br>
+                        </div>
+                        '''
+
+# Añadir la leyenda al mapa
+        mapa_colombia.get_root().html.add_child(folium.Element(legend_html))
         folium_static(mapa_colombia, width=600, height=400)
         #st.table(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10))
 
