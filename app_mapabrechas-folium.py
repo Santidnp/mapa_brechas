@@ -55,11 +55,12 @@ def generar_base():
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
     proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
+    serie = read_excel('Serie_tiempo.xlsx')
     
     
-    return df,inversiones,proyecto
+    return df,inversiones,proyecto,serie
 
-df ,inversiones,proyecto = generar_base()
+df ,inversiones,proyecto,serie = generar_base()
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
 
@@ -102,6 +103,8 @@ with st.sidebar:
 df_1 = dynamic_filters.filter_df()
 inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
+columnas_serie = ['Departamento'] + list(df_1['Departamento'].unique())
+serie = serie[columnas_serie]
 #mapa.metric("",'',df_1['Municipio'])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']].loc[:,'Analfabetismo_x'])
@@ -235,3 +238,8 @@ with barras:
 
 st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10),
                    column_config={"Enlace":st.column_config.LinkColumn()})
+
+
+serie_grafica = px.line(serie, x='Departamento', y=serie.columns[1:], markers=True, title='Ipm Departamental')
+serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM')
+st.plotly_chart(serie_grafica)
