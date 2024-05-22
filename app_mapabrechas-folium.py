@@ -103,7 +103,7 @@ with st.sidebar:
 df_1 = dynamic_filters.filter_df()
 inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
-columnas_serie = ['Departamento'] + list(df_1['Departamento'].unique())
+columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
 #mapa.metric("",'',df_1['Municipio'])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
