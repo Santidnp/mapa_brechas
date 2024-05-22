@@ -240,6 +240,6 @@ st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sect
                    column_config={"Enlace":st.column_config.LinkColumn()})
 
 
-serie_grafica = px.line(serie, x='Departamento', y=serie.columns[1:], markers=True, title='Ipm Departamental')
+serie_grafica = px.line(serie, x='Año', y=serie.columns[1:], markers=True, title='Ipm Departamental')
 serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM')
 st.plotly_chart(serie_grafica)
