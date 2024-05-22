@@ -241,5 +241,5 @@ serie_grafica = px.line(serie, x='Año', y=serie.columns[1:], markers=True, titl
 serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM',width=1000)
 st.plotly_chart(serie_grafica)
 st.markdown('## Proyectos ')
-st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10),
+st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
                    column_config={"Enlace":st.column_config.LinkColumn()})
