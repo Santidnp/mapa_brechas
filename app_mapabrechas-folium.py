@@ -25,7 +25,9 @@ mapeo_colores = {
     'No Aprobado': 'pink',       # Rosa
     'No Viable': 'yellow'          # Lima
 }
-st.set_page_config(layout="wide",initial_sidebar_state="expanded",page_icon="https://www.dnp.gov.co/img/favicon/faviconNew.ico")
+st.set_page_config(layout="wide",initial_sidebar_state="expanded",
+                   page_icon="https://www.dnp.gov.co/img/favicon/faviconNew.ico",
+                   page_title="Mapa de Brechas Territoriales")
 st.markdown("""
 <nav style="background-color: #f8f9fa; padding: 50px;"display: flex; justify-content: center; align-items: center;">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeQaLUYVjPPowO5IXM7mZh6LT5yitFBoyZRKaBkxQAQw&s" alt="Left Image" style="float: left; height: 50px;">
