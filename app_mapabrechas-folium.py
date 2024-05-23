@@ -13,8 +13,17 @@ from numpy import round
 from streamlit_extras.metric_cards import style_metric_cards
 from pandas import read_excel
 from folium import IFrame
+import webbrowser
 #def make_clickable(val):
     #return f'<a href="{val}" target="_blank">{val}</a>'
+
+
+def arreglar_divipola(x):
+    if len(str(int(x))) == 4:
+        return '0'+ str(int(x))
+    
+    else:
+        return str(int(x))
 mapeo_colores = {
     'Formulación': 'blue',       # Azul 
     'Viable': 'orange',            # Naranja 
@@ -52,10 +61,14 @@ def generar_base():
     df['DPTO_CNMBR'] = df['DPTO_CNMBR'].apply(lambda x : x.capitalize())
     df['Municipio'] = df['MPIO_CNMBR'] + '-' +df['DPTO_CNMBR']
     df.rename(columns = {'DPTO_CNMBR':'Departamento'},inplace = True)
+    df['DIVIPOLA_2'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x))
+    df['DIVIPOLA_2'] = df['DIVIPOLA_2'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
     inversiones = read_excel('Inversiones.xlsx')
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
+
+    
     proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     serie = read_excel('Serie_tiempo.xlsx')
     
@@ -74,6 +87,7 @@ with st.sidebar:
     #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
+    boton_terridata = st.button('ver información del municipo en Terridata')
 
 
 #def filtro(base):
@@ -107,6 +121,7 @@ inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
+st.write(df_1['DIVIPOLA_2'])
 #mapa.metric("",'',df_1['Municipio'])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']].loc[:,'Analfabetismo_x'])
@@ -245,3 +260,11 @@ st.plotly_chart(serie_grafica)
 st.markdown('## Proyectos ')
 st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
                    column_config={"Enlace":st.column_config.LinkColumn()})
+
+
+#st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
+
+if boton_terridata:
+
+    webbrowser.open_new_tab(list(df_1['DIVIPOLA_2'])[0])
+    
