@@ -87,7 +87,7 @@ with st.sidebar:
     #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
-    boton_terridata = st.button('ver información del municipo en Terridata')
+    boton_terridata = st.button('Ver información del municipo en Terridata')
 
 
 #def filtro(base):
