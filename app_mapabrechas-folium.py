@@ -121,7 +121,7 @@ inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
-st.write(df_1['DIVIPOLA_2'])
+#st.write(df_1['DIVIPOLA_2'])
 #mapa.metric("",'',df_1['Municipio'])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']].loc[:,'Analfabetismo_x'])
