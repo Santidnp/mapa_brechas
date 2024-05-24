@@ -75,6 +75,9 @@ def generar_base():
     
     return df,inversiones,proyecto,serie
 
+
+################################################################Procesamiento###########################################################
+
 df ,inversiones,proyecto,serie = generar_base()
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
@@ -84,7 +87,9 @@ proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
 link = list(df_1['DIVIPOLA_2'])[0]
-link = f'[{link}]'
+#link = f'[{link}]'
+
+########################################################################################################################################
 with st.sidebar:
     st.image("dnp-logo.jpg", use_column_width=True)
     Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
