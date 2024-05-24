@@ -262,9 +262,14 @@ st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sect
                    column_config={"Enlace":st.column_config.LinkColumn()})
 
 
-#st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
+st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
+
 
 if boton_terridata:
 
     webbrowser.open_new_tab(list(df_1['DIVIPOLA_2'])[0])
+    #link = list(df_1['DIVIPOLA_2'])[0]
+    
+
+    #st.markdown('<a href=' + link +'target="_blank">Ir a la página web</a>', unsafe_allow_html=True)
     
