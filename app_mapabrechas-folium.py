@@ -78,8 +78,13 @@ def generar_base():
 df ,inversiones,proyecto,serie = generar_base()
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
-
-
+df_1 = dynamic_filters.filter_df()
+inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
+proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
+columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
+serie = serie[columnas_serie]
+link = list(df_1['DIVIPOLA_2'])[0]
+link = f'[{link}]'
 with st.sidebar:
     st.image("dnp-logo.jpg", use_column_width=True)
     Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
@@ -88,6 +93,9 @@ with st.sidebar:
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
     boton_terridata = st.button('Ver información del municipo en Terridata')
+    #st.markdown('<a href=' + link +'target="_blank">Ir a la página web</a>', unsafe_allow_html=True)
+    
+    st.markdown(link, unsafe_allow_html=True)
 
 
 #def filtro(base):
@@ -116,11 +124,7 @@ with st.sidebar:
     # Código para crear el mapa...
     #return mapa_colombia
 
-df_1 = dynamic_filters.filter_df()
-inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
-proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
-columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
-serie = serie[columnas_serie]
+
 #st.write(df_1['DIVIPOLA_2'])
 #mapa.metric("",'',df_1['Municipio'])
 #st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
@@ -262,7 +266,7 @@ st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sect
                    column_config={"Enlace":st.column_config.LinkColumn()})
 
 
-st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
+#st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
 
 
 if boton_terridata:
