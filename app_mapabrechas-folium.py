@@ -97,11 +97,7 @@ with st.sidebar:
     #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
-    boton_terridata = st.button('Ver información del municipo en Terridata')
-    #st.markdown('<a href=' + link +'target="_blank">Ir a la página web</a>', unsafe_allow_html=True)
-    
-    st.markdown(link, unsafe_allow_html=True)
-    st.link_button("Go to gallery", link)
+    st.link_button("Ver información del municipo seleccionado en Terridata", link)
 
 
 #def filtro(base):
@@ -274,13 +270,3 @@ st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sect
 
 #st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
 
-
-if boton_terridata:
-
-    #webbrowser.open_new_tab(list(df_1['DIVIPOLA_2'])[0])
-    #link = list(df_1['DIVIPOLA_2'])[0]
-    st.markdown(link, unsafe_allow_html=True)
-    
-
-    #st.markdown('<a href=' + link +'target="_blank">Ir a la página web</a>', unsafe_allow_html=True)
-    
