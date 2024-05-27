@@ -101,6 +101,7 @@ with st.sidebar:
     #st.markdown('<a href=' + link +'target="_blank">Ir a la página web</a>', unsafe_allow_html=True)
     
     st.markdown(link, unsafe_allow_html=True)
+    st.link_button("Go to gallery", link)
 
 
 #def filtro(base):
@@ -276,8 +277,9 @@ st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sect
 
 if boton_terridata:
 
-    webbrowser.open_new_tab(list(df_1['DIVIPOLA_2'])[0])
+    #webbrowser.open_new_tab(list(df_1['DIVIPOLA_2'])[0])
     #link = list(df_1['DIVIPOLA_2'])[0]
+    st.markdown(link, unsafe_allow_html=True)
     
 
     #st.markdown('<a href=' + link +'target="_blank">Ir a la página web</a>', unsafe_allow_html=True)
