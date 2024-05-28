@@ -31,7 +31,7 @@ def divipola_dep(x):
         return x 
     
     else:
-        return x[:-2] + "00"
+        return x[:-3] + "000"
 mapeo_colores = {
     'Formulación': 'blue',       # Azul 
     'Viable': 'orange',            # Naranja 
@@ -100,6 +100,9 @@ columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
 link = list(df_1['DIVIPOLA_2'])[0]
 link_1 = list(df_1['DIVIPOLA_3'])[0]
+
+#st.write(link_1)
+#st.write(link)
 #link = f'[{link}]'
 
 ########################################################################################################################################
@@ -116,8 +119,8 @@ with st.sidebar:
     #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
-    st.link_button("Ver información del municipo seleccionado en Terridata", link)
     st.link_button("Ver información del Departamento seleccionado en Terridata", link_1)
+    st.link_button("Ver información del municipo seleccionado en Terridata", link)
     
 
 
