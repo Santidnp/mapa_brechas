@@ -24,6 +24,14 @@ def arreglar_divipola(x):
     
     else:
         return str(int(x))
+    
+
+def divipola_dep(x):
+    if x == '11001':
+        return x 
+    
+    else:
+        return x[:-2] + "00"
 mapeo_colores = {
     'Formulación': 'blue',       # Azul 
     'Viable': 'orange',            # Naranja 
@@ -62,7 +70,9 @@ def generar_base():
     df['Municipio'] = df['MPIO_CNMBR'] + '-' +df['DPTO_CNMBR']
     df.rename(columns = {'DPTO_CNMBR':'Departamento'},inplace = True)
     df['DIVIPOLA_2'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x))
+    df['DIVIPOLA_3'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x)).apply(lambda x : divipola_dep(x))
     df['DIVIPOLA_2'] = df['DIVIPOLA_2'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
+    df['DIVIPOLA_3'] = df['DIVIPOLA_3'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
     inversiones = read_excel('Inversiones.xlsx')
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
@@ -71,14 +81,16 @@ def generar_base():
     
     proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     serie = read_excel('Serie_tiempo.xlsx')
+    i_s = read_excel('Indices_Sectores.xlsx')
+    i_s['Indices'] = i_s['Indices'].str.strip()
     
     
-    return df,inversiones,proyecto,serie
+    return df,inversiones,proyecto,serie,i_s
 
 
 ################################################################Procesamiento###########################################################
 
-df ,inversiones,proyecto,serie = generar_base()
+df ,inversiones,proyecto,serie,i_s = generar_base()
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
 df_1 = dynamic_filters.filter_df()
@@ -87,17 +99,26 @@ proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
 link = list(df_1['DIVIPOLA_2'])[0]
+link_1 = list(df_1['DIVIPOLA_3'])[0]
 #link = f'[{link}]'
 
 ########################################################################################################################################
 with st.sidebar:
     st.image("dnp-logo.jpg", use_column_width=True)
-    Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
+    Sector = st.selectbox('Selecione sector',['Todos'] + list(i_s['Sectores'].unique()))
+    #Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
+    if Sector == 'Todos':
+        Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
+    else:
+        Indices = st.selectbox('Índices:', i_s[i_s['Sectores']==Sector]['Indices'])
+
     #Municipio = st.selectbox('Municipio:',['Todos'] + list(df['Localidad'].unique()))
     #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
     st.link_button("Ver información del municipo seleccionado en Terridata", link)
+    st.link_button("Ver información del Departamento seleccionado en Terridata", link_1)
+    
 
 
 #def filtro(base):
