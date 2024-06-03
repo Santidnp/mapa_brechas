@@ -1,8 +1,10 @@
 #import geopandas
-#import pandas as pd
+import pandas as pd
 import streamlit as st
-#import matplotlib.pyplot as plt
+import matplotlib
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import folium
 #from folium.plugins import MarkerCluster, HeatMap
 #import json
@@ -11,7 +13,7 @@ from streamlit_folium import st_folium,folium_static
 from streamlit_dynamic_filters import DynamicFilters
 from numpy import round
 from streamlit_extras.metric_cards import style_metric_cards
-from pandas import read_excel
+from pandas import read_excel, DataFrame
 from folium import IFrame
 import webbrowser
 #def make_clickable(val):
@@ -24,14 +26,6 @@ def arreglar_divipola(x):
     
     else:
         return str(int(x))
-    
-
-def divipola_dep(x):
-    if x == '11001':
-        return x 
-    
-    else:
-        return x[:-3] + "000"
 mapeo_colores = {
     'Formulación': 'blue',       # Azul 
     'Viable': 'orange',            # Naranja 
@@ -70,58 +64,50 @@ def generar_base():
     df['Municipio'] = df['MPIO_CNMBR'] + '-' +df['DPTO_CNMBR']
     df.rename(columns = {'DPTO_CNMBR':'Departamento'},inplace = True)
     df['DIVIPOLA_2'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x))
-    df['DIVIPOLA_3'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x)).apply(lambda x : divipola_dep(x))
     df['DIVIPOLA_2'] = df['DIVIPOLA_2'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
-    df['DIVIPOLA_3'] = df['DIVIPOLA_3'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
-    inversiones = read_excel('Inversiones.xlsx')
+    inversiones = read_excel('Inversiones_clean.xlsx')
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
+    inversiones['Valor_Billon'] = inversiones['Valor Total']/1000
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
 
     
     proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     serie = read_excel('Serie_tiempo.xlsx')
-    i_s = read_excel('Indices_Sectores.xlsx')
-    i_s['Indices'] = i_s['Indices'].str.strip()
     
     
-    return df,inversiones,proyecto,serie,i_s
+    return df,inversiones,proyecto,serie
 
 
 ################################################################Procesamiento###########################################################
 
-df ,inversiones,proyecto,serie,i_s = generar_base()
+df,inversiones,proyecto,serie = generar_base()
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
 df_1 = dynamic_filters.filter_df()
+departamento_df = inversiones[inversiones['Departamento'].isin(df_1['Departamento'])]
+is_filter_by_municipio = bool(len(df_1['DIVIPOLA'].unique()) == 1)
 inversiones = inversiones[inversiones['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 proyecto = proyecto[proyecto['DIVIPOLA'].isin(df_1['DIVIPOLA'])]
 columnas_serie = ['Año'] + list(df_1['Departamento'].unique())
 serie = serie[columnas_serie]
 link = list(df_1['DIVIPOLA_2'])[0]
-link_1 = list(df_1['DIVIPOLA_3'])[0]
-
-#st.write(link_1)
-#st.write(link)
 #link = f'[{link}]'
+
+missing = DataFrame(df_1.iloc[:, 14:-3].isnull().sum()).sort_values(by=[0], ascending=False)
 
 ########################################################################################################################################
 with st.sidebar:
+    
     st.image("dnp-logo.jpg", use_column_width=True)
-    Sector = st.selectbox('Selecione sector',['Todos'] + list(i_s['Sectores'].unique()))
-    #Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
-    if Sector == 'Todos':
-        Indices = st.selectbox('Índices:', list(df.iloc[:,14:-3].columns),index=default_ix)
-    else:
-        Indices = st.selectbox('Índices:', i_s[i_s['Sectores']==Sector]['Indices'])
-
-    #Municipio = st.selectbox('Municipio:',['Todos'] + list(df['Localidad'].unique()))
-    #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
+    Indices = st.selectbox('Índices:', sorted(list(missing[~(missing[0] > 1008)].index)), index=default_ix)
+        #Municipio = st.selectbox('Municipio:',['Todos'] + list(df['Localidad'].unique()))
+        #Departamento = st.selectbox('Departamento:', ['Todos'] + list(df['DPTO_CNMBR'].unique()))
     dynamic_filters.display_filters()
     boton = st.button('Ver información de proyectos')
-    st.link_button("Ver información del Departamento seleccionado en Terridata", link_1)
+    #submitted = st.form_submit_button('Visualizar')
     st.link_button("Ver información del municipo seleccionado en Terridata", link)
-    
+        
 
 
 #def filtro(base):
@@ -221,6 +207,8 @@ with mapa:
         tooltip=folium.GeoJsonTooltip(fields=['MPIO_CNMBR', Indices], aliases=['Municipio', 'Valor Índice: '])
     ).add_to(mapa_colombia)
 
+
+
     df_2 = df_1.sort_values(by=Indices, ascending=False)
 
     #st.markdown("<h3 style='color: black;'>MARI</h10>", unsafe_allow_html=True)
@@ -265,7 +253,9 @@ with mapa:
         
     #folium_static(mapa_colombia, width=725, height=500)
 #folium.LayerControl().add_to_map()
-#map_colombia.save('mapa_folium.html')
+#map_colombia.save('mapa_folium.html')    
+
+    #st.write(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10).to_html(escape=False), unsafe_allow_html=True)
 with barras:
     #ipm_indice_2 = st.selectbox('Componentes Ipm',Ipm_variables,key="unique_key_here")
     #if len(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']]) !=1:
@@ -276,21 +266,226 @@ with barras:
     fig = px.bar(df_2.head(10), y='MPIO_CNMBR', x=Indices)
     fig.update_yaxes(title_text="")
     fig.update_layout(width=600, height=400)
-    st.plotly_chart(fig)
-
-    
     
 
-    #st.write(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10).to_html(escape=False), unsafe_allow_html=True)
-
-
-serie_grafica = px.line(serie, x='Año', y=serie.columns[1:], markers=True, title='Ipm Departamental')
-serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM',width=1000)
-st.plotly_chart(serie_grafica)
 st.markdown('## Proyectos ')
 st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
                    column_config={"Enlace":st.column_config.LinkColumn()})
 
+st.plotly_chart(fig)
+serie_grafica = px.line(serie, x='Año', y=serie.columns[1:], markers=True, title='Ipm Departamental')
+serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM',width=1000)
+st.plotly_chart(serie_grafica)
 
+
+########################################################GRAFICOS-DESCRIPTIVOS####################################################
+
+grouped_data = inversiones.loc[inversiones.groupby('Bpin')['Finalización'].idxmax()]
+estado_count = grouped_data['Estado'].value_counts().reset_index()
+estado_count.columns = ['Estado', 'Total']
+
+mask = ~(grouped_data.Municipio.isna())
+grouped_data2 = grouped_data[mask].groupby(['Municipio', 'Departamento'])[['IPM', 'Valor Total']].agg({'Valor Total':'sum', 'IPM':'mean'})
+grouped_data2 = grouped_data2.reset_index()
+grouped_data2['($) Valor Total'] = '$' + (round(grouped_data2['Valor Total'].astype(float)/1000000,2)).astype(str) + 'M.'
+grouped_data2['Municipio_Departamento'] = grouped_data2['Municipio'] + ', ' + grouped_data2['Departamento']
+
+note = 'El gráfico presenta el valor total invertido en proyectos de carácter municipal, clasificados por departamento <br>Los cálculos no suman los proyectos de caracter Departamental, por lo que el precio total de Colombia no es el total.'
+fig_heatmap = px.treemap(grouped_data2,
+                 path=[px.Constant("Colombia"), 'Departamento', 'Municipio'],
+                 values= 'Valor Total',
+                 color = 'IPM',
+                 color_continuous_scale= 'YlGn',
+                 title= 'Distribución de la inversión total de proyectos por municipalidad'
+                 )
+fig_heatmap.update_layout(
+    title = dict(
+        text= 'Distribución de la inversión total de proyectos por municipalidad',
+        x=0.5,
+        xanchor='center'
+    ),
+    margin = dict(t=50, l=25, r=25, b=25))
+
+fig_heatmap.update_traces(
+    hovertemplate = '<b>%{label}</b><br><br>' +
+                    'Valor Total: %{value:$,.0f}' +'<br>' +
+                    'IPM: %{color:,.2f}<extra></extra>',
+    textinfo ='label+text+value'
+)
+fig_heatmap.data[0].textinfo = 'label'
+
+fig_heatmap.add_annotation(
+    showarrow=False,
+    text=note,
+    font=dict(size=10), 
+    xref='paper',
+    x=0.5,
+    yref='paper',
+    y=-0.1,
+    xanchor='center',
+    yanchor='top'
+    )
+fig_container_id = 'centered-treeemap'
+st.markdown(f'<div id= "(fig_container_id)">', unsafe_allow_html=True)
+st.plotly_chart(fig_heatmap)
+st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown(
+    f"""
+    <style>
+    #{fig_container_id} {{
+        display: flex;
+        justify-content: center;
+    }}
+    #{fig_container_id} .element-container {{
+        display: flex;
+        justify-content: center;
+    }}
+    #{fig_container_id} div.stPlotlyChart {{
+        margin: auto;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+def bar_graph():
+    if is_filter_by_municipio:
+
+        departamento = departamento_df.groupby(['Proyecto'])[['Count', 'IPM', 'Valor Total', 'Valor_Billon']].agg({'Count':'sum', 'IPM':'mean','Valor Total':'mean', 'Valor_Billon': 'mean'}).reset_index()
+        municipio = inversiones.groupby(['Proyecto'])[['Count', 'IPM', 'Valor Total', 'Valor_Billon']].agg({'Count':'sum', 'IPM':'mean','Valor Total':'sum', 'Valor_Billon': 'sum'}).reset_index()
+
+
+        norm = matplotlib.colors.Normalize(municipio['Count'].min(), departamento['Count'].max())
+        colors = px.colors.sequential.YlGn
+
+        def get_color(val):
+            return colors[int(norm(val) * (len(colors) -1))]
+
+        fig_bar2 = go.Figure()
+
+        # Barra - Municipio
+        fig_bar2.add_trace(go.Bar(
+            x=municipio['Proyecto'],
+            y=municipio['Valor_Billon'],
+            customdata = municipio[['Valor Total', 'Count']],
+            marker_color = [get_color(val) for val in municipio['Count']],
+            name='Municipio',
+            hovertemplate='<b>%{x}</b><br>' +
+                            'Total: %{customdata[1]:,.0f}<br>' +
+                            'Valor Total: %{customdata[0]:,.0f}<br>'
+            
+        ))
+
+        # Barra - Departamento
+        fig_bar2.add_trace(go.Bar(
+            x=departamento['Proyecto'],
+            y=departamento['Valor_Billon'],
+            marker_line=dict(width=2, color='white'),
+            customdata = departamento[['Valor Total', 'Count']],
+            marker_color = [get_color(val) for val in departamento['Count']],
+            marker_pattern_shape=["/" for item in departamento['Proyecto']],
+            name='Departamento',
+            hovertemplate='<b>%{x}</b><br>' +
+                            'Total: %{customdata[1]:,.0f}<br>' +
+                            'Valor Promedio: %{customdata[0]:,.0f}<br>'
+            
+        ))
+
+        #Barra de color
+        fig_bar2.add_trace(go.Scatter(
+        x=[None], y=[None],
+            mode='markers',
+            showlegend= False,
+            marker=dict(
+                colorscale='YlGn',
+                cmin=min(departamento['Count'].min(), municipio['Count'].min()),
+                cmax=max(departamento['Count'].max(), municipio['Count'].max()),
+                colorbar=dict(
+                    title = 'Total de Proyectos',
+                    lenmode='fraction',
+                    len=0.75,
+                    yanchor='top',
+                    y=1,
+                    xanchor='left',
+                    x=0.45
+                )
+            ),
+            hoverinfo='none'
+        ))
+
+        fig_bar2.update_layout(
+            barmode='group',
+            title='Distribución de cantidad proyectos por categoría',
+            xaxis_tickangle=-45,
+            xaxis_title= 'Proyectos',
+            showlegend=True,
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.45
+            ),
+            coloraxis1=dict(
+                colorscale='YlGn',
+                cmin=min(departamento['Count'].min(), municipio['Count'].min()),
+                cmax=max(departamento['Count'].max(), municipio['Count'].max()),
+                colorbar=dict(
+                    title = 'Total de Proyectos',
+                    lenmode='fraction',
+                    len=0.75,
+                    yanchor='top',
+                    y=1,
+                    xanchor='left',
+                    x=1.02
+                )
+            )
+        )
+        return fig_bar2
+
+    else:
+        grouped_data3 = grouped_data[mask].groupby('Proyecto')[['IPM', 'Valor Total', 'Count']].agg({'Count':'sum', 'IPM':'mean','Valor Total':'sum'}).reset_index()
+        grouped_data3['Valor_Billon'] = grouped_data3['Valor Total']/1000
+        fig_bar = px.bar(grouped_data3, x='Proyecto', y='Count', color='Valor_Billon', custom_data= ['Valor Total'],title= 'Distribución de cantidad proyectos por categoría')
+
+        fig_bar.update_traces(
+            hovertemplate='<b>%{x}</b><br>' +
+                        'Total: %{y}<br>' +
+                        'Valor Total: %{customdata[0]:,.0f}<br>'
+        )
+        return fig_bar
+
+
+
+fig_pie = px.pie(estado_count, values='Total', names='Estado', title ='Distribución del estado de los proyectos', color_discrete_map=  mapeo_colores)
+
+grouped_data3 = grouped_data[mask].groupby('Proyecto')[['IPM', 'Valor Total', 'Count']].agg({'Count':'sum', 'IPM':'mean','Valor Total':'sum'}).reset_index()
+grouped_data3['Valor_Billon'] = grouped_data3['Valor Total']/1000
+fig_bar = bar_graph()
+
+fig = make_subplots(rows=1, cols=2, subplot_titles=('Distribución de cantidad proyectos por categoría', 'Distribución del estado de los proyectos'), specs=[[{"type": "xy"}, {"type": "domain"}]])
+for trace in fig_bar.data:
+    fig.add_trace(trace, row=1,col=1)
+
+for trace in fig_pie.data:
+    fig.add_trace(trace, row=1,col=2)
+
+fig.update_layout(height=600, 
+                  width=1200, 
+                  showlegend=True,
+                  legend=dict(
+                     x=1.1,
+                     y=0.5,
+                     traceorder='normal',
+                     font=dict(
+                         size=12
+                     ),
+                 ),
+                 coloraxis_colorbar=dict(
+                     x=0.45,
+                     len=0.75,
+                     title='Valor Total<br>(en millón de millones)',
+                 ),
+                 margin=dict(t=50, l=25, r=25, b=25))
+st.plotly_chart(fig)
 #st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
-
