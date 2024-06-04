@@ -283,14 +283,14 @@ with barras:
     fig = px.bar(df_2.head(10), y='MPIO_CNMBR', x=Indices)
     fig.update_yaxes(title_text="")
     fig.update_layout(width=600, height=400)
-    st.plotly_chart(fig)
+   
 
     
     
 
     #st.write(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']].head(10).to_html(escape=False), unsafe_allow_html=True)
 
-
+st.plotly_chart(fig)
 serie_grafica = px.line(serie, x='Año', y=serie.columns[1:], markers=True, title='Ipm Departamental')
 serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM',width=1000)
 st.plotly_chart(serie_grafica)
