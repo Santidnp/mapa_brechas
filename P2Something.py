@@ -6,13 +6,14 @@ from sodapy import Socrata
 class DataProcessor:
 
     def __init__(self, df1_id, df2_id, excel_filename):
-        self.client = Socrata("www.datos.gov.co", None)
+        #self.client = Socrata("www.datos.gov.co",None)
+        self.client =  Socrata('www.datos.gov.co',None,username="sngh966.sg@gmail.com",password="@EY.H9pTbm$4jnJ")
         self.df1_id = df1_id
         self.df2_id = df2_id
         self.excel_filename = excel_filename
 
     def fetch_data(self, dataset_id):
-        results = self.client.get_all(dataset_id)
+        results = self.client.get(dataset_id,limit=2000)
         return pd.DataFrame.from_records(results)
     
     def load_excel_data(self, sheet):
@@ -97,3 +98,23 @@ class DataProcessor:
 
 processor = DataProcessor("cf9k-55fw", "iuc2-3r6h", "Divipola.xlsx")
 processor.process_data()
+
+
+
+#'etft2hzpkc74osbghhyzs9ho5'  clave api
+#'5ft4f1zx0pinax33epa6t01os819daubsvn11v5bbb4rbd6fsg' clave secreta api
+
+
+client = Socrata('www.datos.gov.co',app_token='P3nSNFpLnbXCqdRTYMC9jmv8h',username="sngh966.sg@gmail.com",password="@EY.H9pTbm$4jnJ")
+
+client = Socrata('www.datos.gov.co',app_token='P3nSNFpLnbXCqdRTYMC9jmv8h',access_token='0nBmO_Zm_BiG-olbn9LpdrAJZbdD6VodFQa7')
+
+
+results = client.get("v8aw-jabd", limit=2000)
+results = client.get("cf9k-55fw", limit=2000)
+
+results = client.get_all("cf9k-55fw")
+
+a = pd.DataFrame.from_records(results)
+
+b = pd.read_csv('Clean_DNP-proyectos_datos_basicos.csv')
