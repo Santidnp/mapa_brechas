@@ -1,4 +1,4 @@
-from pandas import read_excel
+
 def asignar_color(row):
     max_col = row.idxmax()
     
