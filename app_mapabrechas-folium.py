@@ -14,11 +14,13 @@ from streamlit_folium import st_folium,folium_static
 from streamlit_dynamic_filters import DynamicFilters
 from numpy import round
 from streamlit_extras.metric_cards import style_metric_cards
-from pandas import read_excel,DataFrame
+from pandas import read_excel,DataFrame,Series
 from folium import IFrame
+from Generar_conteo import *
 #import webbrowser
 #def make_clickable(val):
     #return f'<a href="{val}" target="_blank">{val}</a>'
+
 
 
 def arreglar_divipola(x):
@@ -64,6 +66,8 @@ def generar_base():
     with open('geo_data_3.pickle', 'rb') as f:
         df = pickle.load(f)
     df.geometry =df.geometry.simplify(tolerance=0.03)
+
+    divipola = read_excel('Divipola 1.xlsx')
     #print(df.columns)
     #df = df.rename({'MPIO_CDPMP':'DIVIPOLA'})
     #df['DIVIPOLA'] = df['MPIO_CDPMP'].apply(int)
@@ -76,25 +80,30 @@ def generar_base():
     df['DIVIPOLA_3'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x)).apply(lambda x : divipola_dep(x))
     df['DIVIPOLA_2'] = df['DIVIPOLA_2'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
     df['DIVIPOLA_3'] = df['DIVIPOLA_3'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
+    dictionary_longi = Series(divipola.Longitud.values, index=divipola.Divipola_mun).to_dict()
+    dictionary_lati = Series(divipola.Latitud.values, index=divipola.Divipola_mun).to_dict()
     inversiones = read_excel('Inversiones_clean.xlsx')
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Valor_Billon'] = inversiones['Valor Total']/1000
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
-
+    inversiones['Longitud'] = inversiones['DIVIPOLA'].map(dictionary_longi)
+    inversiones['Latitud'] = inversiones['DIVIPOLA'].map(dictionary_lati)
     
-    proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
+    #proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     serie = read_excel('Serie_tiempo.xlsx')
     i_s = read_excel('Indices_Sectores.xlsx')
     i_s['Indices'] = i_s['Indices'].str.strip()
+    proyecto = Proyectos_conteo(inversiones).generar_conteo()
     
     
-    return df,inversiones,proyecto,serie,i_s
+    return df,inversiones,serie,i_s,proyecto
 
 
 ################################################################Procesamiento###########################################################
 
-df ,inversiones,proyecto,serie,i_s = generar_base()
+df ,inversiones,serie,i_s,proyecto = generar_base()
+
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
 dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
 df_1 = dynamic_filters.filter_df()
@@ -252,7 +261,7 @@ with mapa:
             popup = folium.Popup(iframe, max_width=200)
             folium.Marker(
                 location=[proyecto.iloc[i]['Latitud'], proyecto.iloc[i]['Longitud']],
-                popup= popup , #proyecto.iloc[i]['conteo_estados'],
+                popup= popup,#proyecto.iloc[i]['Nombre Proyecto']
                 #icon=folium.Icon(color=mapeo_colores[inversiones.iloc[i]['Estado']])
                 icon=folium.Icon(color=proyecto.iloc[i]['color'])
                 ).add_to(mapa_colombia)
@@ -511,3 +520,5 @@ fig.update_layout(height=600,
                  ),
                  margin=dict(t=50, l=25, r=25, b=25))
 st.plotly_chart(fig)
+
+
