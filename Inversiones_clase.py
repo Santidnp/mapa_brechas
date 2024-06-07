@@ -9,11 +9,6 @@ with open('geo_data_3.pickle', 'rb') as f:
 
 
 
-# Función para cargar la base de datos desde la API
-def cargar_base(api_id, nombre_base_script):
-    data = DatosGov().cargar_base(api_id=api_id)
-    datos = data.to_dataframe()
-    return nombre_base_script, datos
 
 diccionario_sectores = {
     'Ambiente Y Desarrollo Sostenible': 'Ambiente y Desarrollo Sostenible',
@@ -53,30 +48,13 @@ diccionario_sectores = {
 class Inversion:
 
     def __init__(self):
-        inventario_proyectos = pd.read_excel("Tablas_Proyec.xlsx")
-        inventario_proyectos=inventario_proyectos.loc[inventario_proyectos['seleccion'] == 'x']
 
 
-        with ThreadPoolExecutor() as executor:
-            futures = []
-        
-        # Iterar sobre las filas del DataFrame inventario_proyectos
-            for index, row in inventario_proyectos.iterrows():
-                numero_api = row['numero_api']
-                nombre_base_script = row['nombre_base_script']
-                futures.append(executor.submit(cargar_base, numero_api, nombre_base_script))
-        
-        # Iterar sobre los objetos futuros para obtener los resultados
-            for future in futures:
-                nombre_base_script, datos = future.result()
-                # Crear un nuevo DataFrame con el nombre especificado en la columna 'nombre_base_script'
-                globals()[nombre_base_script] = datos.copy() 
-                
 
-
-            self.results_df = globals()['PROY_proyectos_datos_basicos']
-            
-            self.results2_df = globals()['PROY_EjecucionProyectoDivipola']
+            self.results_df = DatosGov().cargar_base(api_id = 'cf9k-55fw')
+            self.results_df = self.results_df.to_dataframe()
+            self.results2_df = DatosGov().cargar_base(api_id = 'u3qu-swda')
+            self.results2_df = self.results2_df.to_dataframe()
 
             self.divipola = read_excel('Divipola 1.xlsx')
             
