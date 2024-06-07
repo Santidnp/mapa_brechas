@@ -97,7 +97,7 @@ class DataProcessor:
         df.to_csv('Clean_DNP-proyectos_datos_basicos.csv', index=False)
 
 processor = DataProcessor("cf9k-55fw", "iuc2-3r6h", "Divipola.xlsx")
-processor.process_data()
+k = processor.process_data()
 
 
 

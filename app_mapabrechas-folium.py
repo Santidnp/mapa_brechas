@@ -17,6 +17,7 @@ from streamlit_extras.metric_cards import style_metric_cards
 from pandas import read_excel,DataFrame,Series
 from folium import IFrame
 from Generar_conteo import *
+from Inversiones_clase import *
 #import webbrowser
 #def make_clickable(val):
     #return f'<a href="{val}" target="_blank">{val}</a>'
@@ -67,7 +68,7 @@ def generar_base():
         df = pickle.load(f)
     df.geometry =df.geometry.simplify(tolerance=0.03)
 
-    divipola = read_excel('Divipola 1.xlsx')
+    #divipola = read_excel('Divipola 1.xlsx')
     #print(df.columns)
     #df = df.rename({'MPIO_CDPMP':'DIVIPOLA'})
     #df['DIVIPOLA'] = df['MPIO_CDPMP'].apply(int)
@@ -80,20 +81,22 @@ def generar_base():
     df['DIVIPOLA_3'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x)).apply(lambda x : divipola_dep(x))
     df['DIVIPOLA_2'] = df['DIVIPOLA_2'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
     df['DIVIPOLA_3'] = df['DIVIPOLA_3'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
-    dictionary_longi = Series(divipola.Longitud.values, index=divipola.Divipola_mun).to_dict()
-    dictionary_lati = Series(divipola.Latitud.values, index=divipola.Divipola_mun).to_dict()
-    inversiones = read_excel('Inversiones_clean.xlsx')
+    #dictionary_longi = Series(divipola.Longitud.values, index=divipola.Divipola_mun).to_dict()
+    #dictionary_lati = Series(divipola.Latitud.values, index=divipola.Divipola_mun).to_dict()
+    #inversiones = read_excel('Inversiones_clean.xlsx')
+    inversiones = Inversion().process_data()
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Valor_Billon'] = inversiones['Valor Total']/1000
-    inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + x)
+    inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + str(x))
     #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
-    inversiones['Longitud'] = inversiones['DIVIPOLA'].map(dictionary_longi)
-    inversiones['Latitud'] = inversiones['DIVIPOLA'].map(dictionary_lati)
+    #inversiones['Longitud'] = inversiones['DIVIPOLA'].map(dictionary_longi)
+    #inversiones['Latitud'] = inversiones['DIVIPOLA'].map(dictionary_lati)
     
     #proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     serie = read_excel('Serie_tiempo.xlsx')
     i_s = read_excel('Indices_Sectores.xlsx')
     i_s['Indices'] = i_s['Indices'].str.strip()
+    i_s['Sectores'] = i_s['Sectores'].str.strip()
     proyecto = Proyectos_conteo(inversiones).generar_conteo()
     
     
@@ -304,8 +307,16 @@ serie_grafica = px.line(serie, x='Año', y=serie.columns[1:], markers=True, titl
 serie_grafica.update_layout(xaxis_title='Año', yaxis_title='IPM',width=1000)
 st.plotly_chart(serie_grafica)
 st.markdown('## Proyectos ')
-st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sector','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
-                   column_config={"Enlace":st.column_config.LinkColumn()})
+
+if Sector == 'Todos':
+    st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sectores','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
+                    column_config={"Enlace":st.column_config.LinkColumn()})
+else:
+
+    inversiones_2 = inversiones[inversiones['Sectores'] == Sector]
+
+    st.data_editor(inversiones_2.sort_values(by='Valor Total', ascending=False)[['Sectores','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
+                    column_config={"Enlace":st.column_config.LinkColumn()})
 
 
 #st.components.v1.iframe("https://terridata.blob.core.windows.net/fichas/Ficha_19824.pdf", height=400, scrolling=True)
