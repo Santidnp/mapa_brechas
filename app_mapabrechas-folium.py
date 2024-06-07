@@ -313,9 +313,9 @@ if Sector == 'Todos':
                     column_config={"Enlace":st.column_config.LinkColumn()})
 else:
 
-    inversiones_2 = inversiones[inversiones['Sectores'] == Sector]
+    inversiones = inversiones[inversiones['Sectores'] == Sector]
 
-    st.data_editor(inversiones_2.sort_values(by='Valor Total', ascending=False)[['Sectores','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
+    st.data_editor(inversiones.sort_values(by='Valor Total', ascending=False)[['Sectores','Entidad Responsable','Nombre Proyecto','Estado','Valor Total','Enlace']],
                     column_config={"Enlace":st.column_config.LinkColumn()})
 
 
