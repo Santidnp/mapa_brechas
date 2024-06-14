@@ -11,7 +11,7 @@ def asignar_color(row):
     else:
         return 'black'
 
-
+columnas_excluir = ['En Ejecución', 'Terminado']
 
 class Proyectos_conteo:
 
@@ -23,7 +23,9 @@ class Proyectos_conteo:
     def generar_conteo(self):
         counts = self.inversiones.groupby(['DIVIPOLA', 'Estado']).size().unstack(fill_value=0)
         #counts['Otros'] = counts['Desaprobado'] + counts['Formulación'] + counts['No Aprobado'] + counts['Aprobado'] + counts['Viable'] + counts['No Viable']
-        counts['Otros'] = counts['Desaprobado'] +  counts['No Aprobado'] + counts['Aprobado'] + counts['Viable'] 
+        columnas_a_sumar = [col for col in counts.columns if col not in columnas_excluir]
+        #counts['Otros'] = counts['Desaprobado'] +  counts['No Aprobado'] + counts['Aprobado'] + counts['Viable'] 
+        counts['Otros'] = counts[columnas_a_sumar].sum(axis=1)
         counts = counts.reset_index()
         counts = counts[['DIVIPOLA','En Ejecución','Terminado','Otros']]
         counts['color'] = counts.loc[:,['En Ejecución','Terminado','Otros']].apply(asignar_color, axis=1)
