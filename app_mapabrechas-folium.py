@@ -332,7 +332,7 @@ grouped_data2 = grouped_data[mask].groupby(['Municipio', 'Departamento'])[['IPM'
 grouped_data2 = grouped_data2.reset_index()
 grouped_data2['($) Valor Total'] = '$' + (round(grouped_data2['Valor Total'].astype(float)/1000000,2)).astype(str) + 'M.'
 grouped_data2['Municipio_Departamento'] = grouped_data2['Municipio'] + ', ' + grouped_data2['Departamento']
-#grouped_data2 = grouped_data2[grouped_data2['Valor Total'] > 0]
+grouped_data2 = grouped_data2[grouped_data2['Valor Total'] > 0]
 st.write(grouped_data2[grouped_data2['Valor Total'] == 0])
 st.write(grouped_data2['Valor Total'].isnull().sum())
 note = 'El gráfico presenta el valor total invertido en proyectos de carácter municipal, clasificados por departamento <br>Los cálculos no suman los proyectos de caracter Departamental, por lo que el precio total de Colombia no es el total.'
