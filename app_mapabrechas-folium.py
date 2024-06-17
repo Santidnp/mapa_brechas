@@ -38,6 +38,28 @@ def divipola_dep(x):
     
     else:
         return x[:-3] + "000"
+    
+def eliminar_espacios_extra(cadena):
+    return ' '.join(cadena.split())
+
+
+def convertir_a_numero(valor):
+    if isinstance(valor, str):
+        if '%' in valor:
+           
+            valor_sin_simbolo = valor.strip('%')
+            valor_sin_coma = valor_sin_simbolo.replace(',', '.')
+            return float(valor_sin_coma) / 100
+        elif ',' in valor:
+            
+            valor_sin_coma = valor.replace(',', '.')
+            return float(valor_sin_coma)
+    elif isinstance(valor, (int, float)):
+        return valor  
+    else:
+        return valor  
+
+
 mapeo_colores = {
     'Formulación': 'blue',       # Azul 
     'Viable': 'orange',            # Naranja 
@@ -64,51 +86,34 @@ st.markdown("<h1 style= 'text-align: center; red;'> Mapas de calor: Brechas Terr
 
 @st.cache_data
 def generar_base():
-    with open('geo_data_3.pickle', 'rb') as f:
+    with open('geo_data_4.pickle', 'rb') as f:
         df = pickle.load(f)
-    df.geometry =df.geometry.simplify(tolerance=0.03)
-
-    #divipola = read_excel('Divipola 1.xlsx')
-    #print(df.columns)
-    #df = df.rename({'MPIO_CDPMP':'DIVIPOLA'})
-    #df['DIVIPOLA'] = df['MPIO_CDPMP'].apply(int)
-    df['MPIO_CNMBR'] = df['MPIO_CNMBR'].apply(lambda x : x.capitalize())
-
-    df['DPTO_CNMBR'] = df['DPTO_CNMBR'].apply(lambda x : x.capitalize())
-    df['Municipio'] = df['MPIO_CNMBR'] + '-' +df['DPTO_CNMBR']
-    df.rename(columns = {'DPTO_CNMBR':'Departamento'},inplace = True)
-    df['DIVIPOLA_2'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x))
-    df['DIVIPOLA_3'] = df['DIVIPOLA'].apply(lambda x: arreglar_divipola(x)).apply(lambda x : divipola_dep(x))
-    df['DIVIPOLA_2'] = df['DIVIPOLA_2'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
-    df['DIVIPOLA_3'] = df['DIVIPOLA_3'].apply(lambda x : 'https://terridata.blob.core.windows.net/fichas/Ficha_'+ x + '.pdf')
-    #dictionary_longi = Series(divipola.Longitud.values, index=divipola.Divipola_mun).to_dict()
-    #dictionary_lati = Series(divipola.Latitud.values, index=divipola.Divipola_mun).to_dict()
-    #inversiones = read_excel('Inversiones_clean.xlsx')
     inversiones = Inversion().process_data()
     inversiones = inversiones.dropna(subset=['Latitud', 'Longitud'])
     inversiones['Valor_Billon'] = inversiones['Valor Total']/1000
     inversiones['Enlace'] =inversiones['Bpin'].apply(lambda x : 'https://mapainversiones.dnp.gov.co/Home/FichaProyectosMenuAllUsers?Bpin=' + str(x))
-    #inversiones['Enlace'] = inversiones['Enlace'].apply(make_clickable)
-    #inversiones['Longitud'] = inversiones['DIVIPOLA'].map(dictionary_longi)
-    #inversiones['Latitud'] = inversiones['DIVIPOLA'].map(dictionary_lati)
-    
-    #proyecto = read_excel('Proyectos_conteo_1.xlsx').dropna(subset=['Latitud', 'Longitud'])
     serie = read_excel('Serie_tiempo.xlsx')
     i_s = read_excel('Indices_Sectores.xlsx')
-    i_s['Indices'] = i_s['Indices'].str.strip()
-    i_s['Sectores'] = i_s['Sectores'].str.strip()
+    i_s['Indices'] = i_s['Indices'].apply(lambda x : eliminar_espacios_extra(x))
+    i_s['Sectores'] = i_s['Sectores'].apply(lambda x : eliminar_espacios_extra(x))
     proyecto = Proyectos_conteo(inversiones).generar_conteo()
-    
-    
     return df,inversiones,serie,i_s,proyecto
+
+
+
 
 
 ################################################################Procesamiento###########################################################
 
 df ,inversiones,serie,i_s,proyecto = generar_base()
 
+
+
+
+
 default_ix = list(df.iloc[:,14:-3].columns).index('IPM')
-dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
+#dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio','PDET','ZOMAC'])
+dynamic_filters = DynamicFilters(df, filters=['Departamento','Municipio'])
 df_1 = dynamic_filters.filter_df()
 departamento_df = inversiones[inversiones['Departamento'].isin(df_1['Departamento'])]
 is_filter_by_municipio = bool(len(df_1['DIVIPOLA'].unique()) == 1)
@@ -123,6 +128,8 @@ missing = DataFrame(df_1.iloc[:, 14:-3].isnull().sum()).sort_values(by=[0], asce
 #st.write(link_1)
 #st.write(link)
 #link = f'[{link}]'
+
+
 
 ########################################################################################################################################
 with st.sidebar:
@@ -141,40 +148,6 @@ with st.sidebar:
     st.link_button("Ver información del Departamento seleccionado en Terridata", link_1)
     st.link_button("Ver información del municipo seleccionado en Terridata", link)
     
-
-
-#def filtro(base):
-    
-    #if Departamento == 'Todos' and Municipio == 'Todos':
-        #return base 
-    #elif Departamento != 'Todos':
-        #base = df[df['DPTO_CNMBR']==Departamento]
-        #return base
-    #elif Municipio != 'Todos':
-        #base = df[df['Localidad']==Municipio]
-        #return base
-
-
-
-
-#Añadir los polígonos de los municipios al mapa
-#folium.GeoJson(geo_data).add_to(map_colombia)
-
-    # Mostrar el mapa en Streamlit
-#map_colombia
-
-#@st.cache_data
-#def cargar_mapa():
-    #mapa_colombia = folium.Map(location=[4.5709, -74.2973], zoom_start=5.2)
-    # Código para crear el mapa...
-    #return mapa_colombia
-
-
-#st.write(df_1['DIVIPOLA_2'])
-#mapa.metric("",'',df_1['Municipio'])
-#st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']])
-#st.write(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']].loc[:,'Analfabetismo_x'])
-#st.write(len(df_1[['Departamento','MPIO_CNMBR','Analfabetismo_x','PDET','ZOMAC']]))
 
 Ipm_variables = ['Analfabetismo_x',	
 'Bajo logro educativo',	
@@ -197,7 +170,6 @@ mapa, barras = st.columns([0.6,0.4])
 
 
 
-#st.divider()
 #mapa.metric("Toneladas necesarias",'',2)
 with mapa:
     #ipm_indice = st.selectbox('Componentes Ipm',Ipm_variables)
@@ -333,8 +305,7 @@ grouped_data2 = grouped_data2.reset_index()
 grouped_data2['($) Valor Total'] = '$' + (round(grouped_data2['Valor Total'].astype(float)/1000000,2)).astype(str) + 'M.'
 grouped_data2['Municipio_Departamento'] = grouped_data2['Municipio'] + ', ' + grouped_data2['Departamento']
 grouped_data2 = grouped_data2[grouped_data2['Valor Total'] > 0]
-st.write(grouped_data2[grouped_data2['Valor Total'] == 0])
-st.write(grouped_data2['Valor Total'].isnull().sum())
+
 note = 'El gráfico presenta el valor total invertido en proyectos de carácter municipal, clasificados por departamento <br>Los cálculos no suman los proyectos de caracter Departamental, por lo que el precio total de Colombia no es el total.'
 fig_heatmap = px.treemap(grouped_data2,
                  path=[px.Constant("Colombia"), 'Departamento', 'Municipio'],
